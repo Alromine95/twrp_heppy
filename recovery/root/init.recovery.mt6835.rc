@@ -30,6 +30,7 @@ insmod /lib/modules/mtk-afe-external.ko
 insmod /lib/modules/clk-common.ko
 
 # SCP
+#insmod /lib/modules/scp.ko
 
 # Display + touch dependencies
 insmod /lib/modules/mtk_disp_notify.ko
