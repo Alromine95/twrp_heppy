@@ -17,31 +17,6 @@ on init
     # Start debug_boot IMMEDIATELY to force permissive and setup paths early
     start debug_boot
 
-# Load thermal modules for CPU temperature display
-insmod /lib/modules/thermal_interface.ko
-insmod /lib/modules/soc_temp_lvts.ko
-
-# SCP dependencies first
-insmod /lib/modules/mtk_tinysys_ipi.ko
-insmod /lib/modules/mtk-mbox.ko
-insmod /lib/modules/aee_aed.ko
-insmod /lib/modules/emi-mpu.ko
-insmod /lib/modules/mtk-afe-external.ko
-insmod /lib/modules/clk-common.ko
-
-# SCP
-#insmod /lib/modules/scp.ko
-
-# Display + touch dependencies
-insmod /lib/modules/mtk_disp_notify.ko
-insmod /lib/modules/lcm_panel_p15_bias.ko
-insmod /lib/modules/mtk_panel_ext.ko
-insmod /lib/modules/lct_tp.ko
-insmod /lib/modules/xiaomi_tp.ko
-
-# Novatek touch
-insmod /lib/modules/nt36528a_spi.ko
-
 # For vibrator
     write /sys/class/leds/vibrator/trigger "transient"
     chown system system /sys/class/leds/vibrator/trigger
@@ -108,6 +83,13 @@ on boot
     chmod 0664 /dev/xiaomi-touch
     chown system system /sys/class/touch/tp_dev/fod_status
     chmod 0664 /sys/class/touch/tp_dev/fod_status
+
+    # Load Touch modules via isolated service after core modules are stable
+    start load-touch-modules
+    start health-hal-2-1
+    start vendor.vibrator-default
+    setprop sys.usb.config adb
+    write /dev/kmsg "TWRP_INIT: on boot completed"
     exec u:r:recovery:s0 root root -- /system/bin/sh -c "sleep 2; dmesg > /persist/twrp_boot_dmesg.log 2>&1; cat /proc/kallsyms > /persist/twrp_kallsyms.log 2>&1; cat /proc/bus/input/devices > /persist/twrp_input_devices.log 2>&1"
 
 service touchfeature-hal-1-0 /vendor/bin/hw/vendor.xiaomi.hardware.touchfeature@1.0-service
@@ -116,6 +98,13 @@ service touchfeature-hal-1-0 /vendor/bin/hw/vendor.xiaomi.hardware.touchfeature@
     group root
     setenv LD_LIBRARY_PATH /vendor/lib64:/vendor/lib:/system/lib64:/system/lib:/sbin
     onrestart restart touchfeature-hal-1-0
+    seclabel u:r:recovery:s0
+
+service load-touch-modules /system/bin/modprobe --all=/lib/modules/modules.load.touch --dirname=/lib/modules
+    class core
+    user root
+    group root
+    oneshot
     seclabel u:r:recovery:s0
     
     
@@ -187,12 +176,6 @@ on property:twrp.all.users.decrypted=true
     stop tee-supplicant
     stop keymint-mitee
     stop gatekeeper-1-0
-
-on boot
-    start health-hal-2-1
-    start vendor.vibrator-default
-    setprop sys.usb.config adb
-    write /dev/kmsg "TWRP_INIT: on boot completed"
 
 service debug_boot /system/bin/sh /debug_boot.sh
     user root
