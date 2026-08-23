@@ -2,6 +2,7 @@
 /lib/modules/mtk_rpmsg_mbox.ko
 /lib/modules/mtk_tinysys_ipi.ko
 /lib/modules/mtk-afe-external.ko
+/lib/modules/scp.ko
 /lib/modules/lct_tp.ko
 /lib/modules/xiaomi_tp.ko
 /lib/modules/nt36528a_spi.ko
